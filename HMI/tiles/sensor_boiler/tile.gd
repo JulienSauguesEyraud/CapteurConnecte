@@ -78,10 +78,10 @@ func on_message(subject_name: String, source_id: int, payload: PackedByteArray) 
 			%DigitalLabel.text = "bouton capteur relaché"
 	if subject_name == SUB_STATUS_TEMP:
 		if payload.size() != 4: return
-		%AnalogLabel.text = "Temperature: %d" % payload.decode_u32(0)
+		%TemperatureLabel.text = "Temperature: %.1f" % payload.decode_float(0) + "°C"
 	if subject_name == SUB_STATUS_HUMIDITY:
 		if payload.size() != 4: return
-		%AnalogLabel.text = "niveau d'humidité: %d" % payload.decode_u32(0) % " %"
+		%HumidityLabel.text = "niveau d'humidité: %.1f" % payload.decode_float(0) + "%"
 
 
 func _process(delta: float) -> void:

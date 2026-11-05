@@ -134,10 +134,8 @@ void loop() {
 
     temperatureData.value = dht.readTemperature();
     MPS.publishValue(kSubStatusTemperatureData, temperatureData);
-    Serial.printf("Temperature : %.1f °C\n", temperatureData.value);
 
     humidityData.value = dht.readHumidity();
     MPS.publishValue(kSubStatusHumidityData, humidityData);
-    Serial.printf("Humidite : %.1f %%\n", humidityData.value);
   }
 }
