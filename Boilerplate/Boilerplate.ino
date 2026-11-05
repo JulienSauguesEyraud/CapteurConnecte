@@ -17,14 +17,27 @@ struct __attribute__((packed)) DigitalPayload {
   uint32_t value;
 };
 
+struct __attribute__((packed)) TemperaturePayload {
+  float value;
+};
+
+struct __attribute__((packed)) HumidityPayload {
+  float value;
+};
 // ---- Variables globales ----
+static const uint32_t kSerialBaudRate = 115200;   // débit du port série (bauds)
+static const uint32_t kCounterPeriodMs = 2000;    // période du compteur (ms)
+static const uint32_t kDataPeriodMs = 1000;    // période des datas (ms)
+constexpr uint8_t kAnalogPin = 4;
+constexpr uint8_t kDigitalPin = 3;
+constexpr uint8_t kDhtPin = 0;
+constexpr uint8_t kDhtType = DHT11;
 static CounterPayload counter = {0};
 static AnalogPayload analogData = {0};
 static DigitalPayload digitalData = {0};
-constexpr uint8_t kAnalogPin = 4;
-constexpr uint8_t kDigitalPin = 3;
-static const uint32_t kSerialBaudRate = 115200;   // débit du port série (bauds)
-static const uint32_t kCounterPeriodMs = 2000;    // période du compteur (ms)
+static TemperaturePayload temperatureData = {0};
+static HumidityPayload humidityData = {0};
+static DHT dht(kDhtPin, kDhtType);
 
 // ---- Subjects ----
 constexpr mps::Subject kSubHb = mps::makeSubject("hb_" DEVICE_NAME);
@@ -32,6 +45,8 @@ constexpr mps::Subject kSubStatusCounter = mps::makeSubject("status_" DEVICE_NAM
 constexpr mps::Subject kSubCmdResetCounter = mps::makeSubject("cmd_" DEVICE_NAME "_reset_counter");
 constexpr mps::Subject kSubStatusAnalogData = mps::makeSubject("status_" DEVICE_NAME "_analog_data");
 constexpr mps::Subject kSubStatusDigitalData = mps::makeSubject("status_" DEVICE_NAME "_digital_data");
+constexpr mps::Subject kSubStatusTemperatureData = mps::makeSubject("status_" DEVICE_NAME "_temperature_data");
+constexpr mps::Subject kSubStatusHumidityData = mps::makeSubject("status_" DEVICE_NAME "_humidity_data");
 
 // ---- Callbacks ----
 // Appelé lors de l'ouverture de la session (callback)
@@ -39,6 +54,8 @@ static void onSessionOpened() {
   MPS.publishValue(kSubStatusCounter, counter);
   MPS.publishValue(kSubStatusAnalogData, analogData);
   MPS.publishValue(kSubStatusDigitalData, digitalData);
+  MPS.publishValue(kSubStatusTemperatureData, temperatureData);
+  MPS.publishValue(kSubStatusHumidityData, humidityData);
 }
 
 // Appelé en cas d'échec d'envoi (callback)
@@ -70,6 +87,8 @@ void publishHeartbeat(){
 void setup() {
   Serial.begin(kSerialBaudRate); // Démarrage de la communication série à kSerialBaudRate bauds
   MPS.setLogOutput(&Serial); // Définition de la sortie des messages de log de la lib MPS
+
+  dht.begin();
 
   pinMode(kDigitalPin, INPUT_PULLUP);
 
@@ -104,15 +123,21 @@ void loop() {
     MPS.publishValue(kSubStatusCounter, counter);
   }
   static uint32_t lastAnalogDataTimeMs = 0;
-  if (millis() - lastAnalogDataTimeMs >= 1000) {
+  if (millis() - lastAnalogDataTimeMs >= kDataPeriodMs) {
     lastAnalogDataTimeMs = millis();
+
     analogData.value = analogRead(kAnalogPin);
     MPS.publishValue(kSubStatusAnalogData, analogData);
-  }
-    static uint32_t lastDigitalDataTimeMs = 0;
-  if (millis() - lastDigitalDataTimeMs >= 1000) {
-    lastDigitalDataTimeMs = millis();
+
     digitalData.value = digitalRead(kDigitalPin);
     MPS.publishValue(kSubStatusDigitalData, digitalData);
+
+    temperatureData.value = dht.readTemperature();
+    MPS.publishValue(kSubStatusTemperatureData, temperatureData);
+    Serial.printf("Temperature : %.1f °C\n", temperatureData.value);
+
+    humidityData.value = dht.readHumidity();
+    MPS.publishValue(kSubStatusHumidityData, humidityData);
+    Serial.printf("Humidite : %.1f %%\n", humidityData.value);
   }
 }
