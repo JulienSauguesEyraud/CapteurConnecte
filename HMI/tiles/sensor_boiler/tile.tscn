@@ -12,10 +12,8 @@
 content_margin_bottom = 1.0
 
 [node name="TileSensorDemo" type="Panel" unique_id=304170558]
-custom_minimum_size = Vector2(336, 336)
-custom_maximum_size = Vector2(336, 336)
-offset_right = 360.0
-offset_bottom = 240.0
+offset_right = 500.0
+offset_bottom = 500.0
 mouse_filter = 2
 theme_override_styles/panel = ExtResource("1_lf8ud")
 script = ExtResource("2_y03qy")
@@ -80,6 +78,28 @@ theme_override_fonts/font = ExtResource("7_f7tlc")
 theme_override_font_sizes/font_size = 20
 text = "node_id: ∅"
 
+[node name="TempLabel" type="Label" parent="." unique_id=576979432]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 16.0
+offset_top = 206.0
+offset_right = 320.0
+offset_bottom = 238.0
+theme_override_fonts/font = ExtResource("7_f7tlc")
+theme_override_font_sizes/font_size = 20
+text = "Temperature: ∅"
+
+[node name="HumidityLabel" type="Label" parent="." unique_id=1041281797]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 16.0
+offset_top = 246.0
+offset_right = 320.0
+offset_bottom = 278.0
+theme_override_fonts/font = ExtResource("7_f7tlc")
+theme_override_font_sizes/font_size = 20
+text = "niveau d'humidité: ∅%"
+
 [node name="AnalogLabel" type="Label" parent="." unique_id=1469343765]
 unique_name_in_owner = true
 layout_mode = 0
@@ -116,10 +136,10 @@ text = "Compteur: ∅"
 [node name="ResetButton" type="Button" parent="." unique_id=178391817]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 10.0
-offset_top = 218.0
-offset_right = 324.0
-offset_bottom = 257.0
+offset_left = 84.0
+offset_top = 430.0
+offset_right = 398.0
+offset_bottom = 469.0
 theme_override_fonts/font = ExtResource("7_f7tlc")
 theme_override_font_sizes/font_size = 20
 text = "Reinitialisation Compteur"

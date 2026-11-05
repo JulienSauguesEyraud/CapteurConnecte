@@ -11,7 +11,8 @@ const SUB_STATUS_COUNTER = "status_" + DEVICE_NAME + "_counter"
 const SUB_CMD_RESET = "cmd_" + DEVICE_NAME + "_reset_counter"
 const SUB_STATUS_ANALOG = "status_" + DEVICE_NAME + "_analog_data" 
 const SUB_STATUS_DIGITAL = "status_" + DEVICE_NAME + "_digital_data"
-
+const SUB_STATUS_TEMP = "status_" + DEVICE_NAME + "_temperature_data" 
+const SUB_STATUS_HUMIDITY = "status_" + DEVICE_NAME + "_humidity_data"
 
 # ---- VARIABLES ----
 var _node_id: int = -1
@@ -36,6 +37,8 @@ func get_subscriptions() -> PackedStringArray:
 	subscriptions.append(SUB_STATUS_COUNTER) # sans cette ligne, on_message ne reçoit rien
 	subscriptions.append(SUB_STATUS_ANALOG)
 	subscriptions.append(SUB_STATUS_DIGITAL)
+	subscriptions.append(SUB_STATUS_TEMP)
+	subscriptions.append(SUB_STATUS_HUMIDITY)
 	return subscriptions
 
 
@@ -73,6 +76,13 @@ func on_message(subject_name: String, source_id: int, payload: PackedByteArray) 
 			%DigitalLabel.text = "bouton capteur appuyé"
 		else:
 			%DigitalLabel.text = "bouton capteur relaché"
+	if subject_name == SUB_STATUS_TEMP:
+		if payload.size() != 4: return
+		%AnalogLabel.text = "Temperature: %d" % payload.decode_u32(0)
+	if subject_name == SUB_STATUS_HUMIDITY:
+		if payload.size() != 4: return
+		%AnalogLabel.text = "niveau d'humidité: %d" % payload.decode_u32(0) % " %"
+
 
 func _process(delta: float) -> void:
 	_seconds_since_hb += delta
