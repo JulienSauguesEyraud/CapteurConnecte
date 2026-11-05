@@ -9,8 +9,20 @@ struct __attribute__((packed)) CounterPayload {
   uint32_t value;
 };
 
+struct __attribute__((packed)) AnalogPayload {
+  uint32_t value;
+};
+
+struct __attribute__((packed)) DigitalPayload {
+  uint32_t value;
+};
+
 // ---- Variables globales ----
 static CounterPayload counter = {0};
+static AnalogPayload analogData = {0};
+static DigitalPayload digitalData = {0};
+constexpr uint8_t kAnalogPin = 4;
+constexpr uint8_t kDigitalPin = 3;
 static const uint32_t kSerialBaudRate = 115200;   // débit du port série (bauds)
 static const uint32_t kCounterPeriodMs = 2000;    // période du compteur (ms)
 
@@ -18,11 +30,15 @@ static const uint32_t kCounterPeriodMs = 2000;    // période du compteur (ms)
 constexpr mps::Subject kSubHb = mps::makeSubject("hb_" DEVICE_NAME);
 constexpr mps::Subject kSubStatusCounter = mps::makeSubject("status_" DEVICE_NAME "_counter");
 constexpr mps::Subject kSubCmdResetCounter = mps::makeSubject("cmd_" DEVICE_NAME "_reset_counter");
+constexpr mps::Subject kSubStatusAnalogData = mps::makeSubject("status_" DEVICE_NAME "_analog_data");
+constexpr mps::Subject kSubStatusDigitalData = mps::makeSubject("status_" DEVICE_NAME "_digital_data");
 
 // ---- Callbacks ----
 // Appelé lors de l'ouverture de la session (callback)
 static void onSessionOpened() {
   MPS.publishValue(kSubStatusCounter, counter);
+  MPS.publishValue(kSubStatusAnalogData, analogData);
+  MPS.publishValue(kSubStatusDigitalData, digitalData);
 }
 
 // Appelé en cas d'échec d'envoi (callback)
@@ -55,6 +71,8 @@ void setup() {
   Serial.begin(kSerialBaudRate); // Démarrage de la communication série à kSerialBaudRate bauds
   MPS.setLogOutput(&Serial); // Définition de la sortie des messages de log de la lib MPS
 
+  pinMode(kDigitalPin, INPUT_PULLUP);
+
   // enregistrement des callbacks
   MPS.setRegisteredCallback(onSessionOpened);
   MPS.setSendFailedCallback(onSendFailed);
@@ -84,5 +102,17 @@ void loop() {
     lastCounterTimeMs = millis();
     counter.value++;
     MPS.publishValue(kSubStatusCounter, counter);
+  }
+  static uint32_t lastAnalogDataTimeMs = 0;
+  if (millis() - lastAnalogDataTimeMs >= 1000) {
+    lastAnalogDataTimeMs = millis();
+    analogData.value = analogRead(kAnalogPin);
+    MPS.publishValue(kSubStatusAnalogData, analogData);
+  }
+    static uint32_t lastDigitalDataTimeMs = 0;
+  if (millis() - lastDigitalDataTimeMs >= 1000) {
+    lastDigitalDataTimeMs = millis();
+    digitalData.value = digitalRead(kDigitalPin);
+    MPS.publishValue(kSubStatusDigitalData, digitalData);
   }
 }
