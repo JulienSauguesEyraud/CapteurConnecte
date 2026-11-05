@@ -69,8 +69,10 @@ func on_message(subject_name: String, source_id: int, payload: PackedByteArray) 
 		%AnalogLabel.text = "valeur analogique: %d" % payload.decode_u32(0)
 	if subject_name == SUB_STATUS_DIGITAL:
 		if payload.size() != 4: return
-		%DigitalLabel.text = "valeur digitale: %d" % payload.decode_u32(0)
-
+		if payload.decode_u32(0) == 0 :
+			%DigitalLabel.text = "bouton capteur appuyé"
+		else:
+			%DigitalLabel.text = "bouton capteur relaché"
 
 func _process(delta: float) -> void:
 	_seconds_since_hb += delta
