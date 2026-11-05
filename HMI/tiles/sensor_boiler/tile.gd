@@ -9,6 +9,9 @@ const HB_TIMEOUT_S := 3.5
 const HB_BLINK_S := 0.5
 const SUB_STATUS_COUNTER = "status_" + DEVICE_NAME + "_counter"
 const SUB_CMD_RESET = "cmd_" + DEVICE_NAME + "_reset_counter"
+const SUB_STATUS_ANALOG = "status_" + DEVICE_NAME + "_analog_data" 
+const SUB_STATUS_DIGITAL = "status_" + DEVICE_NAME + "_digital_data"
+
 
 # ---- VARIABLES ----
 var _node_id: int = -1
@@ -31,6 +34,8 @@ func get_subscriptions() -> PackedStringArray:
 	var subscriptions: PackedStringArray = []
 	subscriptions.append(SUB_HB)
 	subscriptions.append(SUB_STATUS_COUNTER) # sans cette ligne, on_message ne reçoit rien
+	subscriptions.append(SUB_STATUS_ANALOG)
+	subscriptions.append(SUB_STATUS_DIGITAL)
 	return subscriptions
 
 
@@ -59,6 +64,12 @@ func on_message(subject_name: String, source_id: int, payload: PackedByteArray) 
 	if subject_name == SUB_STATUS_COUNTER:
 		if payload.size() != 4: return # le contrat : 4 octets, sinon on ignore
 		%CounterLabel.text = "Compteur : %d" % payload.decode_u32(0)
+	if subject_name == SUB_STATUS_ANALOG:
+		if payload.size() != 4: return
+		%AnalogLabel.text = "valeur analogique: %d" % payload.decode_u32(0)
+	if subject_name == SUB_STATUS_DIGITAL:
+		if payload.size() != 4: return
+		%DigitalLabel.text = "valeur digitale: %d" % payload.decode_u32(0)
 
 
 func _process(delta: float) -> void:
