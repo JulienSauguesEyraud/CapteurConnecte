@@ -1,3 +1,6 @@
+#include <DHT.h>
+#include <DHT_U.h>
+
 #include <MPS.h>
 #include "config.h"
 
@@ -9,12 +12,24 @@
 // };
 // static_assert(sizeof(SomePayload) == 3, "SomePayload = 3 octets"); // Filet de sécurité à la compilation
 struct __attribute__((packed)) CounterPayload {
-uint32_t value;
+  uint32_t value;
+};
+
+struct __attribute__((packed)) AnalogPayload {
+  uint32_t value;
+};
+
+struct __attribute__((packed)) DigitalPayload {
+  uint32_t value;
 };
 
 // ---- Variables globales ----
 // placez ici vos variables à partager entre plusieurs contextes (ex : setup, loop, callbacks)
 static CounterPayload counter = {0};
+static AnalogPayload analogData = {0};
+static DigitalPayload digitalData = {0};
+constexpr uint8_t kAnalogPin = 4;
+constexpr uint8_t kDigitalPin = 3;
 
 // ---- Subjects ----
 constexpr mps::Subject kSubHb = mps::makeSubject("hb_" DEVICE_NAME);
@@ -23,6 +38,8 @@ constexpr mps::Subject kSubHb = mps::makeSubject("hb_" DEVICE_NAME);
 // ou : `constexpr mps::Subject kSubCmdSomeOrder = mps::makeSubject("cmd_" DEVICE_NAME "_some_order");`
 constexpr mps::Subject kSubStatusCounter = mps::makeSubject("status_" DEVICE_NAME "_counter");
 constexpr mps::Subject kSubCmdResetCounter = mps::makeSubject("cmd_" DEVICE_NAME "_reset_counter");
+constexpr mps::Subject kSubStatusAnalogData = mps::makeSubject("status_" DEVICE_NAME "_analog_data");
+constexpr mps::Subject kSubStatusDigitalData = mps::makeSubject("status_" DEVICE_NAME "_digital_data");
 
 // ---- Callbacks ----
 // Appelé lors de l'ouverture de la session (callback)
@@ -30,6 +47,8 @@ static void onSessionOpened() {
   Serial.println("Session opened!");
   // republiez ici l’état initial, la passerelle ne garde rien
   MPS.publishValue(kSubStatusCounter, counter);
+  MPS.publishValue(kSubStatusAnalogData, analogData);
+  MPS.publishValue(kSubStatusDigitalData, digitalData);
 }
 
 // Appelé en cas d'échec d'envoi (callback)
@@ -68,6 +87,8 @@ void publishHeartbeat(){
 void setup() {
   Serial.begin(115200); // Démarrage de la communication série à 115200 bauds (sortie des Serial.print.. par exemple)
   MPS.setLogOutput(&Serial); // Définition de la sortie des messages de log de la lib MPS
+
+  pinMode(kDigitalPin, INPUT_PULLUP);
 
   // enregistrement des callbacks
   MPS.setRegisteredCallback(onSessionOpened);
@@ -111,5 +132,19 @@ void loop() {
     lastCounterTimeMs = millis();
     counter.value++;
     MPS.publishValue(kSubStatusCounter, counter);
+  }
+  static uint32_t lastAnalogDataTimeMs = 0;
+  if (millis() - lastAnalogDataTimeMs >= 1000) {
+    lastAnalogDataTimeMs = millis();
+    analogData.value = analogRead(kAnalogPin);
+    Serial.printf("Valeur analogique : %lu\n", (unsigned long)analogData.value);
+    MPS.publishValue(kSubStatusAnalogData, analogData);
+  }
+    static uint32_t lastDigitalDataTimeMs = 0;
+  if (millis() - lastDigitalDataTimeMs >= 1000) {
+    lastDigitalDataTimeMs = millis();
+    digitalData.value = digitalRead(kDigitalPin);
+    Serial.printf("Valeur digitale : %lu\n", (unsigned long)digitalData.value);
+    MPS.publishValue(kSubStatusDigitalData, digitalData);
   }
 }
