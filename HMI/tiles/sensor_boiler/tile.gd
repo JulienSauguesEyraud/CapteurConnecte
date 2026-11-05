@@ -13,6 +13,9 @@ const SUB_STATUS_ANALOG = "status_" + DEVICE_NAME + "_analog_data"
 const SUB_STATUS_DIGITAL = "status_" + DEVICE_NAME + "_digital_data"
 const SUB_STATUS_TEMP = "status_" + DEVICE_NAME + "_temperature_data" 
 const SUB_STATUS_HUMIDITY = "status_" + DEVICE_NAME + "_humidity_data"
+const SUB_STATUS_LED_DATA = "status_" + DEVICE_NAME + "_led_data"
+const SUB_CMD_CHANGE_LED_STATE = "cmd_" + DEVICE_NAME + "_change_led_state"
+const SUB_CMD_SET_LED_COLOR = "set_" + DEVICE_NAME + "_led_color"
 
 # ---- VARIABLES ----
 var _node_id: int = -1
@@ -30,6 +33,7 @@ var _connected: bool = false:
 func _ready() -> void:
 	super() # obligatoire : c'est lui qui abonne la tuile
 	%ResetButton.pressed.connect(func(): publish(SUB_CMD_RESET, PackedByteArray(), true))
+	%ChangeLedStateButton.pressed.connect(func(): publish(SUB_CMD_CHANGE_LED_STATE, PackedByteArray(), true))
 
 func get_subscriptions() -> PackedStringArray:
 	var subscriptions: PackedStringArray = []
@@ -39,6 +43,7 @@ func get_subscriptions() -> PackedStringArray:
 	subscriptions.append(SUB_STATUS_DIGITAL)
 	subscriptions.append(SUB_STATUS_TEMP)
 	subscriptions.append(SUB_STATUS_HUMIDITY)
+	subscriptions.append(SUB_STATUS_LED_DATA)
 	return subscriptions
 
 
@@ -48,7 +53,6 @@ func on_node_online(node_id: int, _mac_address: String, device_name: String) -> 
 	if device_name != DEVICE_NAME: return
 	_node_id = node_id  # nouvel identifiant possible après un redémarrage du capteur
 	%IDLabel.text = "node_id: %d" % _node_id
-
 
 func on_node_offline(node_id: int, _reason_code: int) -> void:
 	if node_id == _node_id: _connected = false
@@ -71,8 +75,8 @@ func on_message(subject_name: String, source_id: int, payload: PackedByteArray) 
 		if payload.size() != 4: return
 		%AnalogLabel.text = "valeur analogique: %d" % payload.decode_u32(0)
 	if subject_name == SUB_STATUS_DIGITAL:
-		if payload.size() != 4: return
-		if payload.decode_u32(0) == 0 :
+		if payload.size() != 1: return
+		if payload.decode_u8(0) == 0 :
 			%DigitalLabel.text = "bouton capteur appuyé"
 		else:
 			%DigitalLabel.text = "bouton capteur relaché"
@@ -82,7 +86,12 @@ func on_message(subject_name: String, source_id: int, payload: PackedByteArray) 
 	if subject_name == SUB_STATUS_HUMIDITY:
 		if payload.size() != 4: return
 		%HumidityLabel.text = "niveau d'humidité: %.1f" % payload.decode_float(0) + "%"
-
+	if subject_name == SUB_STATUS_LED_DATA:
+		if payload.size() != 4: return
+		if payload.decode_u8(0) == 0 :
+			%ChangeLedStateButton.text = "allumer la LED"
+		else:
+			%ChangeLedStateButton.text = "éteindre la LED"
 
 func _process(delta: float) -> void:
 	_seconds_since_hb += delta

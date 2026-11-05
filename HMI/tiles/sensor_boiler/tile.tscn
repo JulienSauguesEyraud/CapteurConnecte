@@ -143,3 +143,14 @@ offset_bottom = 687.0
 theme_override_fonts/font = ExtResource("7_f7tlc")
 theme_override_font_sizes/font_size = 20
 text = "Reinitialisation Compteur"
+
+[node name="ChangeLedStateButton" type="Button" parent="." unique_id=1321348110]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 184.0
+offset_top = 600.0
+offset_right = 497.9984
+offset_bottom = 639.0
+theme_override_fonts/font = ExtResource("7_f7tlc")
+theme_override_font_sizes/font_size = 20
+text = "allumer la LED"

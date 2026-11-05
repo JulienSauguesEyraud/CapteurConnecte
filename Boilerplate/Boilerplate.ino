@@ -14,7 +14,7 @@ struct __attribute__((packed)) AnalogPayload {
 };
 
 struct __attribute__((packed)) DigitalPayload {
-  uint32_t value;
+  uint8_t value;
 };
 
 struct __attribute__((packed)) TemperaturePayload {
@@ -24,6 +24,12 @@ struct __attribute__((packed)) TemperaturePayload {
 struct __attribute__((packed)) HumidityPayload {
   float value;
 };
+
+struct __attribute__((packed)) LedPayload {
+  uint8_t state;
+  uint8_t color[3];
+};
+
 // ---- Variables globales ----
 static const uint32_t kSerialBaudRate = 115200;   // débit du port série (bauds)
 static const uint32_t kCounterPeriodMs = 2000;    // période du compteur (ms)
@@ -32,11 +38,13 @@ constexpr uint8_t kAnalogPin = 4;
 constexpr uint8_t kDigitalPin = 3;
 constexpr uint8_t kDhtPin = 0;
 constexpr uint8_t kDhtType = DHT11;
+constexpr uint8_t kLedPin = 2;
 static CounterPayload counter = {0};
 static AnalogPayload analogData = {0};
 static DigitalPayload digitalData = {0};
 static TemperaturePayload temperatureData = {0};
 static HumidityPayload humidityData = {0};
+static LedPayload ledData = {0, {255, 255, 255}};
 static DHT dht(kDhtPin, kDhtType);
 
 // ---- Subjects ----
@@ -47,6 +55,9 @@ constexpr mps::Subject kSubStatusAnalogData = mps::makeSubject("status_" DEVICE_
 constexpr mps::Subject kSubStatusDigitalData = mps::makeSubject("status_" DEVICE_NAME "_digital_data");
 constexpr mps::Subject kSubStatusTemperatureData = mps::makeSubject("status_" DEVICE_NAME "_temperature_data");
 constexpr mps::Subject kSubStatusHumidityData = mps::makeSubject("status_" DEVICE_NAME "_humidity_data");
+constexpr mps::Subject kSubStatusLedData = mps::makeSubject("status_" DEVICE_NAME "_led_data");
+constexpr mps::Subject kSubCmdChangeLedState = mps::makeSubject("cmd_" DEVICE_NAME "_change_led_state");
+constexpr mps::Subject kSubSetLedColor = mps::makeSubject("set_" DEVICE_NAME "_led_color");
 
 // ---- Callbacks ----
 // Appelé lors de l'ouverture de la session (callback)
@@ -56,6 +67,12 @@ static void onSessionOpened() {
   MPS.publishValue(kSubStatusDigitalData, digitalData);
   MPS.publishValue(kSubStatusTemperatureData, temperatureData);
   MPS.publishValue(kSubStatusHumidityData, humidityData);
+  MPS.publishValue(kSubStatusLedData, ledData);
+  if(ledData.state == 0)
+    rgbLedWrite(kLedPin, 0, 0, 0);
+  else
+    rgbLedWrite(kLedPin, ledData.color[0], ledData.color[1], ledData.color[2]);
+
 }
 
 // Appelé en cas d'échec d'envoi (callback)
@@ -67,6 +84,30 @@ static void onCmdReset(const mps::FrameView& message, void*) {
   if (message.payloadLength != 0) return; // ce format n'a pas de payload
   counter.value = 0;
   MPS.publishValue(kSubStatusCounter, counter); // l'IHM voit le résultat réel
+}
+
+static void onCmdChangeLedState(const mps::FrameView& message, void*) {
+  if (message.payloadLength != 0) return; // ce format n'a pas de payload
+  ledData.state = !ledData.state;
+  if (ledData.state == 0)
+    rgbLedWrite(kLedPin, 0, 0, 0);
+  else
+    rgbLedWrite(kLedPin, ledData.color[0], ledData.color[1], ledData.color[2]);
+
+  MPS.publishValue(kSubStatusLedData, ledData); // l'IHM voit le résultat réel
+}
+
+static void onSetLedColor(const mps::FrameView& message, void*) {
+  if (message.payloadLength != 3) return;
+
+  ledData.color[0] = message.payload[0];
+  ledData.color[1] = message.payload[1];
+  ledData.color[2] = message.payload[2];
+
+  if (ledData.state != 0)
+    rgbLedWrite(kLedPin, ledData.color[0], ledData.color[1], ledData.color[2]);
+
+  MPS.publishValue(kSubStatusLedData, ledData);
 }
 
 // ---- Fonctions appelées par setup/loop ----
@@ -104,6 +145,8 @@ void setup() {
   }
 
   MPS.on(kSubCmdResetCounter, onCmdReset);
+  MPS.on(kSubCmdChangeLedState, onCmdChangeLedState);
+  MPS.on(kSubSetLedColor, onSetLedColor);
   // démarrage du client MPS
   if(!MPS.begin(kGatewayMacAddress, DEVICE_NAME, kWifiChannel)) Serial.println("MPS: demarrage impossible");
 }
@@ -137,5 +180,7 @@ void loop() {
 
     humidityData.value = dht.readHumidity();
     MPS.publishValue(kSubStatusHumidityData, humidityData);
+
+    MPS.publishValue(kSubStatusLedData, ledData);
   }
 }
