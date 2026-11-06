@@ -15,7 +15,7 @@ const SUB_STATUS_TEMP = "status_" + DEVICE_NAME + "_temperature_data"
 const SUB_STATUS_HUMIDITY = "status_" + DEVICE_NAME + "_humidity_data"
 const SUB_STATUS_LED_DATA = "status_" + DEVICE_NAME + "_led_data"
 const SUB_CMD_CHANGE_LED_STATE = "cmd_" + DEVICE_NAME + "_change_led_state"
-const SUB_CMD_SET_LED_COLOR = "set_" + DEVICE_NAME + "_led_color"
+const SUB_SET_LED_COLOR = "set_" + DEVICE_NAME + "_led_color"
 
 # ---- VARIABLES ----
 var _node_id: int = -1
@@ -34,6 +34,7 @@ func _ready() -> void:
 	super() # obligatoire : c'est lui qui abonne la tuile
 	%ResetButton.pressed.connect(func(): publish(SUB_CMD_RESET, PackedByteArray(), true))
 	%ChangeLedStateButton.pressed.connect(func(): publish(SUB_CMD_CHANGE_LED_STATE, PackedByteArray(), true))
+	%SetLedColorButton.color_changed.connect(_on_led_color_changed)
 
 func get_subscriptions() -> PackedStringArray:
 	var subscriptions: PackedStringArray = []
@@ -117,3 +118,11 @@ func _on_hb(source_id: int):
 	if source_id != _node_id: return
 	_seconds_since_hb = 0.0
 	_connected = true
+
+func _on_led_color_changed(color: Color) -> void:
+	var payload = PackedByteArray([
+		roundi(color.r * 255),
+		roundi(color.g * 255),
+		roundi(color.b * 255)
+	])
+	publish(SUB_SET_LED_COLOR, payload, true)

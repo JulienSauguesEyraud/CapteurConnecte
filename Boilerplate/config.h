@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-static const uint8_t kGatewayMacAddress[6] = {0x90, 0xDA, 0x72, 0x48, 0x53, 0x5C}; // Adresse de la passerelle (écriture hexadécimale)
-constexpr uint8_t kWifiChannel = 5; // Canal wifi de la passerelle
+static const uint8_t kGatewayMacAddress[6] = {0xF8, 0x5B, 0x1B, 0x05, 0x71, 0xB4}; // Adresse de la passerelle (écriture hexadécimale)
+constexpr uint8_t kWifiChannel = 7; // Canal wifi de la passerelle
 
 #define DEVICE_NAME "sensor_n" // modifiez cette valeur avec le nom de votre capteur (sensor_<groupe>), ex : "sensor_a"

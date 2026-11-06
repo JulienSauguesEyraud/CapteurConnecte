@@ -136,10 +136,10 @@ text = "Compteur: ∅"
 [node name="ResetButton" type="Button" parent="." unique_id=178391817]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 184.0
-offset_top = 648.0
-offset_right = 498.0
-offset_bottom = 687.0
+offset_left = 16.0
+offset_top = 344.0
+offset_right = 330.0
+offset_bottom = 383.0
 theme_override_fonts/font = ExtResource("7_f7tlc")
 theme_override_font_sizes/font_size = 20
 text = "Reinitialisation Compteur"
@@ -147,10 +147,17 @@ text = "Reinitialisation Compteur"
 [node name="ChangeLedStateButton" type="Button" parent="." unique_id=1321348110]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 184.0
-offset_top = 600.0
-offset_right = 497.9984
-offset_bottom = 639.0
+offset_left = 16.0
+offset_top = 296.0
+offset_right = 329.9984
+offset_bottom = 335.0
 theme_override_fonts/font = ExtResource("7_f7tlc")
 theme_override_font_sizes/font_size = 20
 text = "allumer la LED"
+
+[node name="SetLedColorButton" type="ColorPicker" parent="." unique_id=1251659678]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 392.0
+offset_right = 690.0
+offset_bottom = 607.0
