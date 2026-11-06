@@ -44,7 +44,7 @@ static AnalogPayload analogData = {0};
 static DigitalPayload digitalData = {0};
 static TemperaturePayload temperatureData = {0};
 static HumidityPayload humidityData = {0};
-static LedPayload ledData = {0, {255, 255, 255}};
+static LedPayload ledData = {0, {255, 255, 255}}; // couleur de base à blanc (255 étant la couleur max et affichant du blanc)
 static DHT dht(kDhtPin, kDhtType);
 
 // ---- Subjects ----
@@ -59,6 +59,15 @@ constexpr mps::Subject kSubStatusLedData = mps::makeSubject("status_" DEVICE_NAM
 constexpr mps::Subject kSubCmdChangeLedState = mps::makeSubject("cmd_" DEVICE_NAME "_change_led_state");
 constexpr mps::Subject kSubSetLedColor = mps::makeSubject("set_" DEVICE_NAME "_led_color");
 
+
+// Fonction permettant de mettre la couleur selon les valeurs du capteur ou à noire si éteinte
+void ChangeLedColor() {
+  if (ledData.state == 0) 
+    rgbLedWrite(kLedPin, 0, 0, 0); // couleur noire pour que la LED soit éteinte (0 étant la couleur min et affichant du noir)
+  else
+    rgbLedWrite(kLedPin, ledData.color[0], ledData.color[1], ledData.color[2]);
+}
+
 // ---- Callbacks ----
 // Appelé lors de l'ouverture de la session (callback)
 static void onSessionOpened() {
@@ -68,11 +77,7 @@ static void onSessionOpened() {
   MPS.publishValue(kSubStatusTemperatureData, temperatureData);
   MPS.publishValue(kSubStatusHumidityData, humidityData);
   MPS.publishValue(kSubStatusLedData, ledData);
-  if(ledData.state == 0)
-    rgbLedWrite(kLedPin, 0, 0, 0);
-  else
-    rgbLedWrite(kLedPin, ledData.color[0], ledData.color[1], ledData.color[2]);
-
+  ChangeLedColor();
 }
 
 // Appelé en cas d'échec d'envoi (callback)
@@ -91,10 +96,7 @@ static void onCmdReset(const mps::FrameView& message, void*) {
 static void onCmdChangeLedState(const mps::FrameView& message, void*) {
   if (message.payloadLength != 0) return; // ce format n'a pas de payload
   ledData.state = !ledData.state;
-  if (ledData.state == 0)
-    rgbLedWrite(kLedPin, 0, 0, 0);
-  else
-    rgbLedWrite(kLedPin, ledData.color[0], ledData.color[1], ledData.color[2]);
+  ChangeLedColor();
 
   MPS.publishValue(kSubStatusLedData, ledData); // l'IHM voit le résultat réel
 }
@@ -107,8 +109,7 @@ static void onSetLedColor(const mps::FrameView& message, void*) {
   ledData.color[1] = message.payload[1];
   ledData.color[2] = message.payload[2];
 
-  if (ledData.state != 0)
-    rgbLedWrite(kLedPin, ledData.color[0], ledData.color[1], ledData.color[2]);
+  ChangeLedColor();
 
   MPS.publishValue(kSubStatusLedData, ledData);
 }
