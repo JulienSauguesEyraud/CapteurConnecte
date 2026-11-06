@@ -1,5 +1,7 @@
 # CapteurConnecté
 
+Groupe N : Julien Saugues--Eyraud et Mathis Gilgenkrantz
+
 Tous les payloads sont des structures `packed`, en little-endian.
 `<DEVICE_NAME>` est défini dans `config.h`.
 
