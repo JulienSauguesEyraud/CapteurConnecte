@@ -80,12 +80,14 @@ static void onSendFailed(uint16_t sequenceNumber, uint32_t subjectId, mps::SendF
   Serial.printf("/!\\ envoi %u (subject 0x%08lX) perdu\n", sequenceNumber, (unsigned long)subjectId);
 }
 
+// Appelé à la réception de cmd_<DEVICE_NAME>_reset_counter : remet le compteur à 0 et le confirme par status_<DEVICE_NAME>_counter (callback)
 static void onCmdReset(const mps::FrameView& message, void*) {
   if (message.payloadLength != 0) return; // ce format n'a pas de payload
   counter.value = 0;
   MPS.publishValue(kSubStatusCounter, counter); // l'IHM voit le résultat réel
 }
 
+// Appelé à la réception de cmd_<DEVICE_NAME>_change_led_state : inverse l'état de la LED et le confirme par status_<DEVICE_NAME>_led_data (callback)
 static void onCmdChangeLedState(const mps::FrameView& message, void*) {
   if (message.payloadLength != 0) return; // ce format n'a pas de payload
   ledData.state = !ledData.state;
@@ -97,6 +99,7 @@ static void onCmdChangeLedState(const mps::FrameView& message, void*) {
   MPS.publishValue(kSubStatusLedData, ledData); // l'IHM voit le résultat réel
 }
 
+// Appelé à la réception de set_<DEVICE_NAME>_led_color : mémorise la couleur, l'applique si la LED est allumée et la confirme par status_<DEVICE_NAME>_led_data (callback)
 static void onSetLedColor(const mps::FrameView& message, void*) {
   if (message.payloadLength != 3) return;
 

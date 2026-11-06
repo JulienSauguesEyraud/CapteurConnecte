@@ -161,3 +161,4 @@ layout_mode = 0
 offset_left = 392.0
 offset_right = 690.0
 offset_bottom = 607.0
+edit_alpha = false

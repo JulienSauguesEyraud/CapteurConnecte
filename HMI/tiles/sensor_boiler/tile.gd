@@ -35,6 +35,7 @@ func _ready() -> void:
 	%ResetButton.pressed.connect(func(): publish(SUB_CMD_RESET, PackedByteArray(), true))
 	%ChangeLedStateButton.pressed.connect(func(): publish(SUB_CMD_CHANGE_LED_STATE, PackedByteArray(), true))
 	%SetLedColorButton.color_changed.connect(_on_led_color_changed)
+	_set_controls_available(false)
 
 func get_subscriptions() -> PackedStringArray:
 	var subscriptions: PackedStringArray = []
@@ -93,6 +94,7 @@ func on_message(subject_name: String, source_id: int, payload: PackedByteArray) 
 			%ChangeLedStateButton.text = "allumer la LED"
 		else:
 			%ChangeLedStateButton.text = "éteindre la LED"
+		%SetLedColorButton.color = Color8(payload[1], payload[2], payload[3])
 
 func _process(delta: float) -> void:
 	_seconds_since_hb += delta
@@ -104,11 +106,13 @@ func _process(delta: float) -> void:
 func _on_sensor_connected():
 	%IDLabel.text = "node_id: %d" % _node_id
 	%ConnectedIcon.state = true
+	_set_controls_available(true)
 
 
 func _on_sensor_disconnected():
 	%IDLabel.text = "node_id: ∅"
 	%ConnectedIcon.state = false
+	_set_controls_available(false)
 
 ## @brief Traite un heartbeat : (re)connecte le capteur et relance la temporisation.
 ## @param source_id  Identifiant de l'appareil émetteur.
@@ -119,10 +123,17 @@ func _on_hb(source_id: int):
 	_seconds_since_hb = 0.0
 	_connected = true
 
+## @brief Envoie au capteur la couleur choisie dans le ColorPicker (set_ avec ACK).
+## @param color  Couleur sélectionnée.
 func _on_led_color_changed(color: Color) -> void:
-	var payload = PackedByteArray([
-		roundi(color.r * 255),
-		roundi(color.g * 255),
-		roundi(color.b * 255)
-	])
-	publish(SUB_SET_LED_COLOR, payload, true)
+	if not _connected: return
+	publish(SUB_SET_LED_COLOR, PackedByteArray([color.r8, color.g8, color.b8]), true)
+
+## @brief Grise les valeurs et désactive les commandes quand le capteur est déconnecté, et inversement.
+## @param is_available  true si le capteur est connecté.
+func _set_controls_available(is_available: bool) -> void:
+	for label in [%TemperatureLabel, %HumidityLabel, %AnalogLabel, %DigitalLabel, %CounterLabel]:
+		label.modulate = Color.WHITE if is_available else Color.GRAY
+	%ResetButton.disabled = not is_available
+	%ChangeLedStateButton.disabled = not is_available
+	%SetLedColorButton.modulate = Color.WHITE if is_available else Color.GRAY
